@@ -7,10 +7,17 @@ Usage:
 
     import "github.com/sndb/wrs"
 
-2. Create a Choices slice
+2. Create a new Chooser
 
-    cs := Choices{{5, "abc"}, {2, "xyz}, {3, "zxc"}}
+    chr, err := NewChooser(
+        Choice{5, "abc"},
+        Choice{2, "xyz"},
+        Choice{3, "zxc"},
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
 
-3. Choose the random element and assert its type
+3. Pick the random element and assert its type
 
-    cs.Choose().(string)
+    chr.Pick().(string)

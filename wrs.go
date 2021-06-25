@@ -2,6 +2,7 @@ package wrs
 
 import (
 	"crypto/rand"
+	"errors"
 	"math/big"
 	"sort"
 )
@@ -14,38 +15,51 @@ func r(max int) int {
 	return int(n.Int64())
 }
 
+// ErrSumOfWeights is returned by NewChooser when sum of weights is less than zero.
+var ErrSumOfWeights = errors.New("sum of weights should be >= 1")
+
 // Choice represents a weighted value.
 type Choice struct {
 	W int         // weight
 	V interface{} // value
 }
 
-// Choices is a slice of Choice elements.
-type Choices []Choice
-
-func (cs Choices) Len() int {
-	return len(cs)
+// Chooser represents a container of weighted choices to Pick from.
+type Chooser struct {
+	totals       []int
+	runningTotal int
+	Choices      []Choice
 }
 
-func (cs Choices) Less(i int, j int) bool {
-	return cs[i].W < cs[j].W
+func (chr Chooser) Len() int {
+	return len(chr.Choices)
 }
 
-func (cs Choices) Swap(i int, j int) {
-	cs[i], cs[j] = cs[j], cs[i]
+func (chr Chooser) Less(i int, j int) bool {
+	return chr.Choices[i].W < chr.Choices[j].W
 }
 
-// Choose returns a random element from cs.
-//
-// Total number of weights in cs should be >= 1.
-func (cs Choices) Choose() interface{} {
-	var totals []int
-	runningTotal := 0
-	for _, w := range cs {
-		runningTotal += w.W
-		totals = append(totals, runningTotal)
+func (chr Chooser) Swap(i int, j int) {
+	chr.Choices[i], chr.Choices[j] = chr.Choices[j], chr.Choices[i]
+}
+
+// NewChooser returns a new Chooser or error when sum of weights is less than zero.
+func NewChooser(cs ...Choice) (*Chooser, error) {
+	chr := new(Chooser)
+	for _, c := range cs {
+		chr.runningTotal += c.W
+		chr.totals = append(chr.totals, chr.runningTotal)
 	}
-	n := r(runningTotal) + 1
-	i := sort.SearchInts(totals, n)
-	return cs[i].V
+	if chr.runningTotal < 1 {
+		return nil, ErrSumOfWeights
+	}
+	chr.Choices = cs
+	return chr, nil
+}
+
+// Pick returns a random element from Chooser.
+func (chr *Chooser) Pick() interface{} {
+	n := r(chr.runningTotal) + 1
+	i := sort.SearchInts(chr.totals, n)
+	return chr.Choices[i].V
 }
