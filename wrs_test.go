@@ -23,10 +23,10 @@ func TestWRS(t *testing.T) {
 			[]Choice{{0, "z"}, {0, "x"}}, ErrSumOfWeights,
 		},
 	}
-	for i, c := range cases {
+	for i, cs := range cases {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			chr, err := NewChooser(c.in...)
-			if err != c.want {
+			c, err := New(cs.in...)
+			if err != cs.want {
 				t.Fatal(err)
 			}
 			if err != nil {
@@ -34,7 +34,7 @@ func TestWRS(t *testing.T) {
 			}
 			m := make(map[string]int)
 			for i := 0; i < 10000; i++ {
-				m[fmt.Sprintf(chr.Pick().(string))]++
+				m[fmt.Sprintf(c.Pick().(string))]++
 			}
 			for k, v := range m {
 				fmt.Println(k, v)

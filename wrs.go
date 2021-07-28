@@ -7,7 +7,7 @@ import (
 	"sort"
 )
 
-func r(max int) int {
+func randInt(max int) int {
 	n, err := rand.Int(rand.Reader, big.NewInt(int64(max)))
 	if err != nil {
 		panic(err)
@@ -31,35 +31,35 @@ type Chooser struct {
 	Choices      []Choice
 }
 
-func (chr Chooser) Len() int {
-	return len(chr.Choices)
-}
-
-func (chr Chooser) Less(i int, j int) bool {
-	return chr.Choices[i].W < chr.Choices[j].W
-}
-
-func (chr Chooser) Swap(i int, j int) {
-	chr.Choices[i], chr.Choices[j] = chr.Choices[j], chr.Choices[i]
-}
-
-// NewChooser returns a new Chooser or error when sum of weights is less than zero.
-func NewChooser(cs ...Choice) (*Chooser, error) {
-	chr := new(Chooser)
-	for _, c := range cs {
-		chr.runningTotal += c.W
-		chr.totals = append(chr.totals, chr.runningTotal)
+// New returns a new Chooser or error when sum of weights is less than zero.
+func New(cs ...Choice) (*Chooser, error) {
+	c := new(Chooser)
+	for _, cc := range cs {
+		c.runningTotal += cc.W
+		c.totals = append(c.totals, c.runningTotal)
 	}
-	if chr.runningTotal < 1 {
+	if c.runningTotal < 1 {
 		return nil, ErrSumOfWeights
 	}
-	chr.Choices = cs
-	return chr, nil
+	c.Choices = cs
+	return c, nil
 }
 
 // Pick returns a random element from Chooser.
-func (chr *Chooser) Pick() interface{} {
-	n := r(chr.runningTotal) + 1
-	i := sort.SearchInts(chr.totals, n)
-	return chr.Choices[i].V
+func (c *Chooser) Pick() interface{} {
+	x := randInt(c.runningTotal) + 1
+	i := sort.SearchInts(c.totals, x)
+	return c.Choices[i].V
+}
+
+func (c *Chooser) Len() int {
+	return len(c.Choices)
+}
+
+func (c *Chooser) Less(i int, j int) bool {
+	return c.Choices[i].W < c.Choices[j].W
+}
+
+func (c *Chooser) Swap(i int, j int) {
+	c.Choices[i], c.Choices[j] = c.Choices[j], c.Choices[i]
 }
